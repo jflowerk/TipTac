@@ -694,8 +694,11 @@ local function SetUnitBuffByAuraInstanceID_Hook(self, unit, auraInstanceID, filt
 			if (spellID) then
 				local link = LibFroznFunctions:GetSpellLink(spellID);
 				if (link) then
-					local linkType, _spellID = link:match("H?(%a+):(%d+)");
-					if (_spellID) then
+					local success, linkType, _spellID = pcall(function()
+						local lType, sID = link:match("H?(%a+):(%d+)");
+						return lType, sID;
+					end);
+					if (success and _spellID) then
 						tipDataAdded[self] = linkType;
 						LinkTypeFuncs.spell(self, true, source, link, linkType, _spellID);
 
