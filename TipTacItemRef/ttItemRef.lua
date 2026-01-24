@@ -3131,7 +3131,11 @@ function LinkTypeFuncs:achievement(link, linkType, achievementID, guid, complete
 	if (modifyAchievementTips) then
 		completed = (tonumber(completed) == 1);
 		local tipName = self:GetName();
-		local isPlayer = (UnitGUID("player"):sub(3) == guid);
+		local isPlayer = false;
+		local success, playerGUID = pcall(UnitGUID, "player");
+		if success and playerGUID then
+			isPlayer = (playerGUID:sub(3) == guid);
+		end
 		-- Get category
 		local category, catParent = GetCategoryInfo(catId);
 		local catName;

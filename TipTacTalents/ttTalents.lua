@@ -194,9 +194,12 @@ function TTT_UpdateTooltip(unitCacheRecord)
 	if (not unitID) then
 		return;
 	end
-	
-	local unitGUID = UnitGUID(unitID);
-	
+
+	local success, unitGUID = pcall(UnitGUID, unitID);
+	if not success or not unitGUID then
+		return;
+	end
+
 	if (unitGUID ~= unitCacheRecord.guid) then
 		return;
 	end
