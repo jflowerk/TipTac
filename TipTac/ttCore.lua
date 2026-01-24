@@ -2090,14 +2090,18 @@ function tt:AddTipToCache(tip, frameName, tipParams)
 					return;
 				end
 				
-				tip:HookScript("OnSizeChanged", function(...)
+				tip:HookScript("OnSizeChanged", function(self, width, height)
 					-- check if insecure interaction with the tip is currently forbidden
 					if (tip:IsForbidden()) then
 						return;
 					end
 
 					-- Protect against secret values in width/height parameters
-					pcall(tip.OnBackdropSizeChanged, ...);
+					-- If width or height are secret values, OnBackdropSizeChanged will fail
+					-- Wrap in pcall to suppress the error
+					if width and height then
+						pcall(tip.OnBackdropSizeChanged, tip, width, height);
+					end
 				end);
 			end);
 		end
