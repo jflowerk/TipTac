@@ -255,12 +255,23 @@ function ttStyle:GenerateTargetedByLines(unitRecord)
 	
 	for i = 1, numUnits do
 		local unit = inGroup and (inRaid and "raid"..i or "party"..i) or (nameplates[i].namePlateUnitToken or "nameplate"..i);
-		local success1, isTargeting = pcall(UnitIsUnit, unit.."target", unitRecord.id);
-		local success2, isPlayer = pcall(UnitIsUnit, unit, "player");
-		if (success1 and isTargeting) and (not success2 or not isPlayer) then
+
+		-- Safely check if this unit is targeting our unit
+		local isTargetingUs = false;
+		local isNotSelf = true;
+
+		local success = pcall(function()
+			local s1, targeting = pcall(UnitIsUnit, unit.."target", unitRecord.id);
+			local s2, player = pcall(UnitIsUnit, unit, "player");
+			isTargetingUs = (s1 and targeting == true);
+			isNotSelf = (not s2 or player ~= true);
+		end);
+
+		if success and isTargetingUs and isNotSelf then
 			local unitName = UnitName(unit);
-			
-			if (UnitIsPlayer(unit)) then
+
+			local successPlayer, isUnitPlayer = pcall(UnitIsPlayer, unit);
+			if successPlayer and isUnitPlayer then
 				local unitClassID = select(3, UnitClass(unit));
 				local unitClassColor = LibFroznFunctions:GetClassColor(unitClassID, nil, cfg.enableCustomClassColors and TT_ExtendedConfig.customClassColors or nil) or TT_COLOR.text.targetedBy;
 				lineTargetedBy:Push(unitClassColor:WrapTextInColorCode(unitName));
