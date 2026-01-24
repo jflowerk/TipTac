@@ -195,7 +195,8 @@ end
 
 -- Add target
 local function AddTarget(lineList,target,targetName)
-	if (UnitIsUnit("player",target)) then
+	local success, isPlayer = pcall(UnitIsUnit, "player", target);
+	if success and isPlayer then
 		lineList:Push(HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(cfg.targetYouText));
 	else
 		local targetReactionColor = CreateColor(unpack(cfg["colorReactText"..LibFroznFunctions:GetUnitReactionIndex(target)]));
@@ -254,7 +255,9 @@ function ttStyle:GenerateTargetedByLines(unitRecord)
 	
 	for i = 1, numUnits do
 		local unit = inGroup and (inRaid and "raid"..i or "party"..i) or (nameplates[i].namePlateUnitToken or "nameplate"..i);
-		if (UnitIsUnit(unit.."target", unitRecord.id)) and (not UnitIsUnit(unit, "player")) then
+		local success1, isTargeting = pcall(UnitIsUnit, unit.."target", unitRecord.id);
+		local success2, isPlayer = pcall(UnitIsUnit, unit, "player");
+		if (success1 and isTargeting) and (not success2 or not isPlayer) then
 			local unitName = UnitName(unit);
 			
 			if (UnitIsPlayer(unit)) then

@@ -3721,9 +3721,14 @@ function tt:GetAnchorPosition(tip)
 	end
 	
 	local mouseFocus = LibFroznFunctions:GetMouseFocus();
-	
+
 	if (isUnit == nil) then
-		isUnit = (UnitExists("mouseover")) and (not UnitIsUnit("mouseover", "player")) or (mouseFocus and mouseFocus.GetAttribute and mouseFocus:GetAttribute("unit")); -- GetAttribute("unit") here is bad, as that will find things like buff frames too.
+		local mouseoverIsNotPlayer = false;
+		if UnitExists("mouseover") then
+			local success, isSameUnit = pcall(UnitIsUnit, "mouseover", "player");
+			mouseoverIsNotPlayer = not success or not isSameUnit;
+		end
+		isUnit = mouseoverIsNotPlayer or (mouseFocus and mouseFocus.GetAttribute and mouseFocus:GetAttribute("unit")); -- GetAttribute("unit") here is bad, as that will find things like buff frames too.
 	end
 	
 	local anchorFrameName = (LibFroznFunctions:WorldFrameIsMouseMotionFocus() and "World" or "Frame") .. (isUnit and "Unit" or "Tip");
@@ -4041,8 +4046,11 @@ function tt:SetUnitRecordFromTip(tip)
 	end
 	
 	-- a mage's mirror images sometimes doesn't return a unit id, this would fix it.
-	if (not unitID) and (UnitExists("mouseover")) and (not UnitIsUnit("mouseover", "player")) then
-		unitID = "mouseover";
+	if (not unitID) and (UnitExists("mouseover")) then
+		local success, isSameUnit = pcall(UnitIsUnit, "mouseover", "player");
+		if not success or not isSameUnit then
+			unitID = "mouseover";
+		end
 	end
 	
 	-- sometimes when you move your mouse quickly over units in the worldframe, we can get here without a unit id.
@@ -4053,7 +4061,8 @@ function tt:SetUnitRecordFromTip(tip)
 	
 	-- a "mouseover" unitID is better to have as we can then safely say the tip should no longer show when it becomes invalid. Harder to say with a "party2" unit.
 	-- this also helps fix the problem that "mouseover" units aren't valid for group members out of range, a bug that has been in WoW since about 3.0.2.
-	if (UnitIsUnit(unitID, "mouseover")) then
+	local success, isSameUnit = pcall(UnitIsUnit, unitID, "mouseover");
+	if success and isSameUnit then
 		unitID = "mouseover";
 	end
 	
