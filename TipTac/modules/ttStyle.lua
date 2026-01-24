@@ -215,8 +215,19 @@ end
 -- TARGET
 function ttStyle:GenerateTargetLines(unitRecord, method)
 	local target = unitRecord.id .."target";
-	local targetName = UnitName(target);
-	if (targetName) and (targetName ~= TT_UnknownObject and targetName ~= "" or UnitExists(target)) then
+
+	-- Safely get target name and check if valid
+	local targetName = nil;
+	local isValidTarget = false;
+
+	local success = pcall(function()
+		targetName = UnitName(target);
+		if targetName then
+			isValidTarget = (targetName ~= TT_UnknownObject and targetName ~= "") or UnitExists(target);
+		end
+	end);
+
+	if success and isValidTarget then
 		if (method == "afterName") then
 			lineName:Push(HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(" : "));
 			AddTarget(lineName,target,targetName);
