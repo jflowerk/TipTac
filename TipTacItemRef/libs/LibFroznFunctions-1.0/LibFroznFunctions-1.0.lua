@@ -1794,8 +1794,9 @@ end
 -- @param  indexOrName  index in the addon list (cannot query Blizzard addons by index) or name of the addon (as in TOC/folder filename, case insensitive)
 -- @return true if the addon is enabled, false otherwise.
 function LibFroznFunctions:IsAddOnEnabled(indexOrName)
-	local loadable, reason = C_AddOns.IsAddOnLoadable(indexOrName, UnitGUID("player"), true);
-	
+	local success, playerGUID = pcall(UnitGUID, "player");
+	local loadable, reason = C_AddOns.IsAddOnLoadable(indexOrName, success and playerGUID or nil, true);
+
 	return loadable;
 end
 
@@ -3176,8 +3177,9 @@ function LibFroznFunctions:GetAuraDescription(unitID, index, filter, callbackFor
 	
 	-- spell data for aura isn't available
 	if (type(callbackForAuraData) == "function") then
-		local unitGUID = UnitGUID(unitID);
-		
+		local success, unitGUID = pcall(UnitGUID, unitID);
+		unitGUID = success and unitGUID or nil;
+
 		spell:ContinueOnSpellLoad(function()
 			LFF_GetAuraDescriptionFromSpellData(unitID, index, filter, callbackForAuraData, unitGUID);
 		end);
@@ -3191,8 +3193,9 @@ end
 function LFF_GetAuraDescriptionFromSpellData(unitID, index, filter, callbackForAuraData, unitGUID)
 	-- check if unit guid from unit id is still the same when waiting for spell data
 	if (type(callbackForAuraData) == "function") and (unitGUID) then
-		local _unitGUID = UnitGUID(unitID);
-		
+		local success, _unitGUID = pcall(UnitGUID, unitID);
+		_unitGUID = success and _unitGUID or nil;
+
 		if (_unitGUID ~= unitGUID) then
 			return;
 		end
@@ -3497,7 +3500,8 @@ function LibFroznFunctions:GetUnitIDFromGUID(unitGUID)
 	};
 	
 	for _, checkUnitID in ipairs(checkUnitIDs) do
-		if (UnitGUID(checkUnitID) == unitGUID) then
+		local success, checkGUID = pcall(UnitGUID, checkUnitID);
+		if success and (checkGUID == unitGUID) then
 			return checkUnitID, unitName;
 		end
 	end
@@ -3509,9 +3513,10 @@ function LibFroznFunctions:GetUnitIDFromGUID(unitGUID)
 	
 	if (numMembers > 0) then
 		for i = 1, numMembers do
-			checkUnitID = (inRaid and "raid" .. i or "party" .. i);
-			
-			if (UnitGUID(checkUnitID) == unitGUID) then
+			checkUnitID = (isInRaid and "raid" .. i or "party" .. i);
+
+			local success, checkGUID = pcall(UnitGUID, checkUnitID);
+			if success and (checkGUID == unitGUID) then
 				return checkUnitID, unitName;
 			end
 		end
@@ -3524,8 +3529,9 @@ function LibFroznFunctions:GetUnitIDFromGUID(unitGUID)
 	if (numNameplates > 0) then
 		for i = 1, numNameplates do
 			checkUnitID = (nameplates[i].namePlateUnitToken or "nameplate" .. i);
-			
-			if (UnitGUID(checkUnitID) == unitGUID) then
+
+			local success, checkGUID = pcall(UnitGUID, checkUnitID);
+			if success and (checkGUID == unitGUID) then
 				return checkUnitID, unitName;
 			end
 		end
@@ -3647,8 +3653,12 @@ local cacheUnitRecords = {};
 
 function LibFroznFunctions:GetUnitRecordFromCache(_unitID, _unitGUID, tryToDetermineUnitIDFromUnitGUID)
 	-- no valid unit any more e.g. during fading out
-	local unitGUID = (_unitID) and (UnitGUID(_unitID)) or (_unitGUID);
-	
+	local unitGUID = _unitGUID;
+	if _unitID then
+		local success, guid = pcall(UnitGUID, _unitID);
+		unitGUID = success and guid or _unitGUID;
+	end
+
 	if (not unitGUID) then
 		return;
 	end
@@ -3732,10 +3742,11 @@ function LibFroznFunctions:CreateUnitRecord(unitID)
 	if (not unitID) then
 		return;
 	end
-	
+
 	-- no unit guid
-	local unitGUID = UnitGUID(unitID);
-	
+	local success, unitGUID = pcall(UnitGUID, unitID);
+	unitGUID = success and unitGUID or nil;
+
 	if (not unitGUID) then
 		return;
 	end
@@ -3785,8 +3796,9 @@ end
 function LibFroznFunctions:UpdateUnitRecord(unitRecord, newUnitID)
 	-- no valid unit any more (e.g. during fading out) or not the same unit
 	local unitID = (newUnitID) or (unitRecord.id);
-	local unitGUID = UnitGUID(unitID);
-	
+	local success, unitGUID = pcall(UnitGUID, unitID);
+	unitGUID = success and unitGUID or nil;
+
 	if (not unitGUID) or (unitGUID ~= unitRecord.guid) then
 		return;
 	end
@@ -4210,9 +4222,10 @@ function LibFroznFunctions:InspectUnit(unitID, callbackForInspectData, removeCal
 	if (not isValidUnitID) then
 		return;
 	end
-	
+
 	-- get record in unit cache
-	local unitGUID = UnitGUID(unitID);
+	local success, unitGUID = pcall(UnitGUID, unitID);
+	unitGUID = success and unitGUID or nil;
 	local unitCacheRecord = frameForDelayedInspection:GetUnitCacheRecord(unitID, unitGUID);
 	
 	if (not unitCacheRecord) then
@@ -4431,7 +4444,8 @@ function frameForDelayedInspection:HookNotifyInspect()
 	-- HOOK: NotifyInspect() to monitor inspect requests
 	hooksecurefunc("NotifyInspect", function(unitID)
 		-- set queued inspect request to inspect requests waiting for inspect data
-		local unitGUID = UnitGUID(unitID);
+		local success, unitGUID = pcall(UnitGUID, unitID);
+		unitGUID = success and unitGUID or nil;
 		local unitCacheRecord = frameForDelayedInspection:GetUnitCacheRecord(unitID, unitGUID);
 		
 		if (unitCacheRecord) then
@@ -4735,11 +4749,12 @@ function LibFroznFunctions:GetAverageItemLevel(unitID, callbackForItemData)
 	if (isAverageItemLevelAvailable ~= LFF_AVERAGE_ITEM_LEVEL.available) then
 		return isAverageItemLevelAvailable;
 	end
-	
+
 	-- check if item data for all items are available and queried from server
 	local itemCountWaitingForData = 0;
-	local unitGUID = UnitGUID(unitID);
-	
+	local success, unitGUID = pcall(UnitGUID, unitID);
+	unitGUID = success and unitGUID or nil;
+
 	for i = INVSLOT_FIRST_EQUIPPED, INVSLOT_LAST_EQUIPPED do
 		local itemID = GetInventoryItemID(unitID, i);
 		
@@ -4772,8 +4787,9 @@ end
 function LFF_GetAverageItemLevelFromItemData(unitID, callbackForItemData, unitGUID)
 	-- check if unit guid from unit id is still the same when waiting for item data
 	if (callbackForItemData) and (unitGUID) then
-		local _unitGUID = UnitGUID(unitID);
-		
+		local success, _unitGUID = pcall(UnitGUID, unitID);
+		_unitGUID = success and _unitGUID or nil;
+
 		if (_unitGUID ~= unitGUID) then
 			return;
 		end
@@ -4954,9 +4970,14 @@ function LFF_GetAverageItemLevelFromItemData(unitID, callbackForItemData, unitGU
 	if (not totalQualityColor) then
 		totalQualityColor = LibFroznFunctions:GetItemQualityColor(Round(totalQuality / totalItemsForQuality), LFF_ITEM_QUALITY.Common);
 	end
-	
+
 	-- set GearScore and quality color
-	TacoTipGearScore, TacoTipGearScoreQualityColor = LFF_GetTacoTipGearScoreFromItemData(unitID, (unitGUID or UnitGUID(unitID)), items);
+	local guid = unitGUID;
+	if not guid then
+		local success, newGuid = pcall(UnitGUID, unitID);
+		guid = success and newGuid or nil;
+	end
+	TacoTipGearScore, TacoTipGearScoreQualityColor = LFF_GetTacoTipGearScoreFromItemData(unitID, guid, items);
 	TipTacGearScore = math.floor(TipTacGearScore);
 	TipTacGearScoreQualityColor = totalQualityColor;
 	
