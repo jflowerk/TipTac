@@ -2428,9 +2428,20 @@ function tt:SetScaleToTip(tip, noFireGroupEvent)
 	
 	if (not tipParams.isFromLibQTip) then -- don't reduce scale if frame belongs to LibQTip-1.0, because tip:UpdateScrolling() from LibQTip-1.0 will resize the tooltip to fit the screen and show a scrollbar if needed.
 		LibFroznFunctions:RecalculateSizeOfGameTooltip(tip);
-		
-		local tipWidthWithNewScaling = tip:GetWidth() * newTipEffectiveScale;
-		local tipHeightWithNewScaling = tip:GetHeight() * newTipEffectiveScale;
+
+		-- Protect against secret values from GetWidth/GetHeight
+		local success, tipWidth, tipHeight = pcall(function()
+			return tip:GetWidth(), tip:GetHeight();
+		end);
+
+		if not success then
+			-- If we can't get dimensions due to secret values, skip scale reduction
+			tip:SetScale(newTipScale);
+			return;
+		end
+
+		local tipWidthWithNewScaling = tipWidth * newTipEffectiveScale;
+		local tipHeightWithNewScaling = tipHeight * newTipEffectiveScale;
 		
 		local leftOffset, rightOffset, topOffset, bottomOffset = tip:GetClampRectInsets();
 		
@@ -2472,10 +2483,12 @@ function tt:SetScaleToTip(tip, noFireGroupEvent)
 	end
 	
 	-- don't set scale to tip if change results in less than 0.5 pixels difference
-	local tipWidth = tip:GetWidth() * tipEffectiveScale;
-	local tipHeight = tip:GetHeight() * tipEffectiveScale;
-	
-	if (tipWidth > 0) and (math.abs((newTipScale / tipScale - 1) * tipWidth) <= 0.5) and (tipHeight > 0) and (math.abs((newTipScale / tipScale - 1) * tipHeight) <= 0.5) then
+	-- Protect against secret values from GetWidth/GetHeight
+	local success2, tipWidth, tipHeight = pcall(function()
+		return tip:GetWidth() * tipEffectiveScale, tip:GetHeight() * tipEffectiveScale;
+	end);
+
+	if success2 and (tipWidth > 0) and (math.abs((newTipScale / tipScale - 1) * tipWidth) <= 0.5) and (tipHeight > 0) and (math.abs((newTipScale / tipScale - 1) * tipHeight) <= 0.5) then
 		return;
 	end
 	
