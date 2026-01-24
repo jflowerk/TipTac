@@ -3572,7 +3572,9 @@ function LibFroznFunctions:GetUnitReactionIndex(unitID)
 	end
 	
 	-- player or player controlled unit
-	if (UnitIsPlayer(unitID)) or (UnitPlayerControlled(unitID)) then -- can't rely on UnitPlayerControlled() alone, since it always returns nil on units out of range.
+	local success1, isPlayer = pcall(UnitIsPlayer, unitID);
+	local success2, isPlayerControlled = pcall(UnitPlayerControlled, unitID);
+	if (success1 and isPlayer) or (success2 and isPlayerControlled) then -- can't rely on UnitPlayerControlled() alone, since it always returns nil on units out of range.
 		if (UnitCanAttack(unitID, "player")) then
 			return (UnitCanAttack("player", unitID) and LFF_UNIT_REACTION_INDEX.hostile or LFF_UNIT_REACTION_INDEX.caution); -- 2 = Hostile, 3 = Caution
 		end
@@ -3757,11 +3759,13 @@ function LibFroznFunctions:CreateUnitRecord(unitID)
 	unitRecord.guid = unitGUID;
 	unitRecord.id = unitID;
 
-	unitRecord.isPlayer = UnitIsPlayer(unitID);
+	local successIsPlayer, isPlayer = pcall(UnitIsPlayer, unitID);
+	unitRecord.isPlayer = successIsPlayer and isPlayer;
 	local success, isSelf = unitRecord.isPlayer and pcall(UnitIsUnit, unitID, "player") or false, false;
 	unitRecord.isSelf = success and isSelf;
 	unitRecord.isOtherPlayer = (unitRecord.isPlayer) and (not unitRecord.isSelf);
-	unitRecord.isPet = (not unitRecord.isPlayer) and UnitPlayerControlled(unitID);
+	local successPetCtrl, isPet = pcall(UnitPlayerControlled, unitID);
+	unitRecord.isPet = (not unitRecord.isPlayer) and (successPetCtrl and isPet);
 	unitRecord.isBattlePet = self:UnitIsBattlePet(unitID);
 	unitRecord.isWildBattlePet = self:UnitIsWildBattlePet(unitID);
 	unitRecord.isBattlePetCompanion = self:UnitIsBattlePetCompanion(unitID);
@@ -4217,8 +4221,12 @@ function LibFroznFunctions:InspectUnit(unitID, callbackForInspectData, removeCal
 	end
 	
 	-- no unit id or not a player
-	local isValidUnitID = (unitID) and (UnitIsPlayer(unitID));
-	
+	local isValidUnitID = false;
+	if unitID then
+		local success, isPlayer = pcall(UnitIsPlayer, unitID);
+		isValidUnitID = success and isPlayer;
+	end
+
 	if (not isValidUnitID) then
 		return;
 	end
@@ -4314,8 +4322,12 @@ end
 -- @return true if inspection is possible, false otherwise.
 function LibFroznFunctions:CanInspect(unitID)
 	-- no unit id or not a player
-	local isValidUnitID = (unitID) and (UnitIsPlayer(unitID));
-	
+	local isValidUnitID = false;
+	if unitID then
+		local success, isPlayer = pcall(UnitIsPlayer, unitID);
+		isValidUnitID = success and isPlayer;
+	end
+
 	if (not isValidUnitID) then
 		return false;
 	end
@@ -4554,8 +4566,12 @@ LFF_TALENTS = {
 
 function LibFroznFunctions:AreTalentsAvailable(unitID, isSelf)
 	-- no unit id or not a player
-	local isValidUnitID = (unitID) and (UnitIsPlayer(unitID));
-	
+	local isValidUnitID = false;
+	if unitID then
+		local success, isPlayer = pcall(UnitIsPlayer, unitID);
+		isValidUnitID = success and isPlayer;
+	end
+
 	if (not isValidUnitID) then
 		return;
 	end
@@ -4711,8 +4727,12 @@ LFF_AVERAGE_ITEM_LEVEL = {
 
 function LibFroznFunctions:IsAverageItemLevelAvailable(unitID)
 	-- no unit id or not a player
-	local isValidUnitID = (unitID) and (UnitIsPlayer(unitID));
-	
+	local isValidUnitID = false;
+	if unitID then
+		local success, isPlayer = pcall(UnitIsPlayer, unitID);
+		isValidUnitID = success and isPlayer;
+	end
+
 	if (not isValidUnitID) then
 		return;
 	end
