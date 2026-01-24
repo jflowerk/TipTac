@@ -637,8 +637,14 @@ end
 -- HOOK: ItemRefTooltip + GameTooltip:SetHyperlink
 function ttif:SetHyperlink_Hook(self, hyperlink)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
-		local refString = hyperlink:match("|H([^|]+)|h") or hyperlink;
-		local linkType = refString:match("^[^:]+");
+		local success1, refString = pcall(function()
+			return hyperlink:match("|H([^|]+)|h") or hyperlink;
+		end);
+		if not success1 then return; end
+		local success2, linkType = pcall(function()
+			return refString:match("^[^:]+");
+		end);
+		if not success2 then return; end
 		-- Call Tip Type Func
 		if (LinkTypeFuncs[linkType]) and (self:NumLines() > 0) then
 			tipDataAdded[self] = "hyperlink";
@@ -648,8 +654,11 @@ function ttif:SetHyperlink_Hook(self, hyperlink)
 				local _linkType, essenceID, essenceRank = (":"):split(refString);
 				local link = C_AzeriteEssence.GetEssenceHyperlink(essenceID, essenceRank);
 				if (link) then
-					local linkType, _essenceID, _essenceRank = link:match("H?(%a+):(%d+):(%d+)");
-					if (_essenceID) then
+					local success, linkType, _essenceID, _essenceRank = pcall(function()
+						local lType, eID, eRank = link:match("H?(%a+):(%d+):(%d+)");
+						return lType, eID, eRank;
+					end);
+					if (success and _essenceID) then
 						tipDataAdded[self] = linkType;
 						LinkTypeFuncs.azessence(self, link, linkType, _essenceID, _essenceRank);
 
@@ -671,8 +680,11 @@ local function SetUnitAura_Hook(self, alternateFilterIfNotDefined, unit, index, 
 		if (auraData) and (auraData.spellId) then
 			local link = LibFroznFunctions:GetSpellLink(auraData.spellId);
 			if (link) then
-				local linkType, _spellID = link:match("H?(%a+):(%d+)");
-				if (_spellID) then
+				local success, linkType, _spellID = pcall(function()
+					local lType, sID = link:match("H?(%a+):(%d+)");
+					return lType, sID;
+				end);
+				if (success and _spellID) then
 					tipDataAdded[self] = linkType;
 					LinkTypeFuncs.spell(self, true, auraData.sourceUnit, link, linkType, _spellID);
 
@@ -717,8 +729,11 @@ local function SetMountBySpellID_Hook(self, spellID)
 		if (spellID) then
 			local link = LibFroznFunctions:GetSpellLink(spellID);
 			if (link) then
-				local linkType, _spellID = link:match("H?(%a+):(%d+)");
-				if (_spellID) then
+				local success, linkType, _spellID = pcall(function()
+					local lType, sID = link:match("H?(%a+):(%d+)");
+					return lType, sID;
+				end);
+				if (success and _spellID) then
 					tipDataAdded[self] = linkType;
 					LinkTypeFuncs.spell(self, false, nil, link, linkType, _spellID);
 				end
@@ -776,8 +791,11 @@ local function SetAction_Hook(self, slot)
 		elseif (actionType == "item") then
 			local name, link = LibFroznFunctions:GetItemFromTooltip(self);
 			if (link) then
-				local linkType, itemID = link:match("H?(%a+):(%d+)");
-				if (itemID) then
+				local success, linkType, itemID = pcall(function()
+					local lType, iID = link:match("H?(%a+):(%d+)");
+					return lType, iID;
+				end);
+				if (success and itemID) then
 					tipDataAdded[self] = linkType;
 					LinkTypeFuncs.item(self, link, linkType, itemID);
 					
@@ -798,8 +816,11 @@ local function SetAction_Hook(self, slot)
 				if (spellID) then
 					local link = LibFroznFunctions:GetSpellLink(spellID);
 					if (link) then
-						local linkType, _spellID = link:match("H?(%a+):(%d+)");
-						if (_spellID) then
+						local success, linkType, _spellID = pcall(function()
+							local lType, sID = link:match("H?(%a+):(%d+)");
+							return lType, sID;
+						end);
+						if (success and _spellID) then
 							tipDataAdded[self] = linkType;
 							LinkTypeFuncs.spell(self, false, nil, link, linkType, _spellID);
 						end
@@ -826,8 +847,11 @@ local function SetAction_Hook(self, slot)
 				if (spellID) then
 					local link = LibFroznFunctions:GetSpellLink(spellID);
 					if (link) then
-						local linkType, _spellID = link:match("H?(%a+):(%d+)");
-						if (_spellID) then
+						local success, linkType, _spellID = pcall(function()
+							local lType, sID = link:match("H?(%a+):(%d+)");
+							return lType, sID;
+						end);
+						if (success and _spellID) then
 							tipDataAdded[self] = linkType;
 							LinkTypeFuncs.spell(self, false, nil, link, linkType, _spellID);
 						end
@@ -839,8 +863,11 @@ local function SetAction_Hook(self, slot)
 				if (name ~= "") then
 					local _, link = GetItemInfo(name);
 					if (link) then
-						local linkType, itemID = link:match("H?(%a+):(%d+)");
-						if (itemID) then
+						local success, linkType, itemID = pcall(function()
+							local lType, iID = link:match("H?(%a+):(%d+)");
+							return lType, iID;
+						end);
+						if (success and itemID) then
 							tipDataAdded[self] = linkType;
 							LinkTypeFuncs.item(self, link, linkType, itemID);
 							
@@ -861,8 +888,11 @@ local function SetAction_Hook(self, slot)
 				if (name ~= "") then
 					local link = LibFroznFunctions:GetSpellLink(name);
 					if (link) then
-						local linkType, spellID = link:match("H?(%a+):(%d+)");
-						if (spellID) then
+						local success, linkType, spellID = pcall(function()
+							local lType, sID = link:match("H?(%a+):(%d+)");
+							return lType, sID;
+						end);
+						if (success and spellID) then
 							tipDataAdded[self] = linkType;
 							LinkTypeFuncs.spell(self, false, nil, link, linkType, spellID);
 						end
@@ -897,8 +927,11 @@ local function SetPetAction_Hook(self, slot)
 		if (spellID) then
 			local link = LibFroznFunctions:GetSpellLink(spellID);
 			if (link) then
-				local linkType, _spellID = link:match("H?(%a+):(%d+)");
-				if (_spellID) then
+				local success, linkType, _spellID = pcall(function()
+					local lType, sID = link:match("H?(%a+):(%d+)");
+					return lType, sID;
+				end);
+				if (success and _spellID) then
 					tipDataAdded[self] = linkType;
 					LinkTypeFuncs.spell(self, false, nil, link, linkType, _spellID);
 				end
@@ -990,8 +1023,11 @@ local function SetQuestCurrency_Hook(self, _type, index)
 		local questRewardCurrencyInfo = LibFroznFunctions:GetQuestCurrencyInfo(_type, index);
 		local link = C_CurrencyInfo_GetCurrencyLink(currencyID, questRewardCurrencyInfo and questRewardCurrencyInfo.totalRewardAmount);
 		if (link) then
-			local linkType, _currencyID, _quantity = link:match("H?(%a+):(%d+):(%d+)");
-			if (_currencyID) then
+			local success, linkType, _currencyID, _quantity = pcall(function()
+				local lType, cID, qty = link:match("H?(%a+):(%d+):(%d+)");
+				return lType, cID, qty;
+			end);
+			if (success and _currencyID) then
 				tipDataAdded[gtt] = linkType;
 				LinkTypeFuncs.currency(gtt, link, linkType, _currencyID, _quantity);
 			end
@@ -1008,8 +1044,11 @@ local function SetQuestLogCurrency_Hook(self, _type, index, questID)
 		if (questRewardCurrencyInfo) then
 			local link = C_CurrencyInfo_GetCurrencyLink(questRewardCurrencyInfo.currencyID, questRewardCurrencyInfo.totalRewardAmount);
 			if (link) then
-				local linkType, _currencyID, _quantity = link:match("H?(%a+):(%d+):(%d+)");
-				if (_currencyID) then
+				local success, linkType, _currencyID, _quantity = pcall(function()
+					local lType, cID, qty = link:match("H?(%a+):(%d+):(%d+)");
+					return lType, cID, qty;
+				end);
+				if (success and _currencyID) then
 					tipDataAdded[gtt] = linkType;
 					LinkTypeFuncs.currency(gtt, link, linkType, _currencyID, _quantity);
 				end
@@ -1023,8 +1062,10 @@ local function SetQuestPartyProgress_Hook(self, questID, omitTitle, ignoreActive
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
 		local link = GetQuestLink(questID);
 		if (link) then
-			local level = link:match("H?%a+:%d+:(%d+)");
-			LinkTypeFuncs.quest(self, nil, "quest", questID, level);
+			local success, level = pcall(function()
+				return link:match("H?%a+:%d+:(%d+)");
+			end);
+			LinkTypeFuncs.quest(self, nil, "quest", questID, success and level or nil);
 		else
 			LinkTypeFuncs.quest(self, nil, "quest", questID, nil);
 		end
@@ -1037,8 +1078,11 @@ local function SetRecipeReagentItem_Hook(self, recipeID, dataSlotIndex)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
 		local link = C_TradeSkillUI.GetRecipeFixedReagentItemLink(recipeID, dataSlotIndex);
 		if (link) then
-			local linkType, itemID = link:match("H?(%a+):(%d+)");
-			if (itemID) then
+			local success, linkType, itemID = pcall(function()
+				local lType, iID = link:match("H?(%a+):(%d+)");
+				return lType, iID;
+			end);
+			if (success and itemID) then
 				tipDataAdded[self] = linkType;
 				LinkTypeFuncs.item(self, link, linkType, itemID);
 			end
@@ -1051,11 +1095,14 @@ local function SetToyByItemID_Hook(self, itemID)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
 		local name, link = LibFroznFunctions:GetItemFromTooltip(self);
 		if (link) then
-			local linkType, _itemID = link:match("H?(%a+):(%d+)");
-			if (_itemID) then
+			local success, linkType, _itemID = pcall(function()
+				local lType, iID = link:match("H?(%a+):(%d+)");
+				return lType, iID;
+			end);
+			if (success and _itemID) then
 				tipDataAdded[self] = linkType;
 				LinkTypeFuncs.item(self, link, linkType, _itemID);
-				
+
 				-- apply workaround for first mouseover
 				ttif:ApplyWorkaroundForFirstMouseover(self, false, nil, link, linkType, _itemID);
 			end
@@ -1070,8 +1117,11 @@ local function SetGlyph_Hook(self, socketID, talentGroup)
 		if (glyphID) then
 			local name, _glyphType, isKnown, icon, spellID, link = C_GlyphInfo.GetGlyphInfoByID(glyphID);
 			if (link) then
-				local linkType, _unknown, _glyphID = link:match("H?(%a+):(%d+):(%d+)");
-				if (_glyphID) then
+				local success, linkType, _unknown, _glyphID = pcall(function()
+					local lType, unk, gID = link:match("H?(%a+):(%d+):(%d+)");
+					return lType, unk, gID;
+				end);
+				if (success and _glyphID) then
 					tipDataAdded[self] = linkType;
 					LinkTypeFuncs.glyph(self, link, linkType, _unknown, _glyphID);
 				end
@@ -1085,8 +1135,11 @@ local function SetGlyphByID_Hook(self, glyphID)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
 		local name, glyphType, isKnown, icon, spellID, link = C_GlyphInfo.GetGlyphInfoByID(glyphID);
 		if (link) then
-			local linkType, _unknown, _glyphID = link:match("H?(%a+):(%d+):(%d+)");
-			if (_glyphID) then
+			local success, linkType, _unknown, _glyphID = pcall(function()
+				local lType, unk, gID = link:match("H?(%a+):(%d+):(%d+)");
+				return lType, unk, gID;
+			end);
+			if (success and _glyphID) then
 				tipDataAdded[self] = linkType;
 				LinkTypeFuncs.glyph(self, link, linkType, _unknown, _glyphID);
 			end
@@ -1102,8 +1155,11 @@ local function SetLFGDungeonReward_Hook(self, dungeonID, rewardIndex)
 			if (rewardType == "item") then
 				local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, itemSellPrice, classID, subClassID, bindType, expansionID, setID, isCraftingReagent = C_Item.GetItemInfo(rewardID);
 				if (itemLink) then
-					local linkType, itemID = itemLink:match("H?(%a+):(%d+)");
-					if (itemID) then
+					local success, linkType, itemID = pcall(function()
+						local lType, iID = itemLink:match("H?(%a+):(%d+)");
+						return lType, iID;
+					end);
+					if (success and itemID) then
 						tipDataAdded[self] = linkType;
 						LinkTypeFuncs.item(self, itemLink, linkType, itemID);
 					end
@@ -1111,8 +1167,11 @@ local function SetLFGDungeonReward_Hook(self, dungeonID, rewardIndex)
 			elseif (rewardType == "currency") then
 				local link = C_CurrencyInfo_GetCurrencyLink(rewardID, numItems);
 				if (link) then
-					local linkType, currencyID, quantity = link:match("H?(%a+):(%d+):(%d+)");
-					if (currencyID) then
+					local success, linkType, currencyID, quantity = pcall(function()
+						local lType, cID, qty = link:match("H?(%a+):(%d+):(%d+)");
+						return lType, cID, qty;
+					end);
+					if (success and currencyID) then
 						tipDataAdded[self] = linkType;
 						LinkTypeFuncs.currency(self, link, linkType, currencyID, quantity);
 					end
@@ -1130,8 +1189,11 @@ local function SetLFGDungeonShortageReward_Hook(self, dungeonID, rewardArg, rewa
 			if (rewardType == "item") then
 				local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, itemSellPrice, classID, subClassID, bindType, expansionID, setID, isCraftingReagent = C_Item.GetItemInfo(rewardID);
 				if (itemLink) then
-					local linkType, itemID = itemLink:match("H?(%a+):(%d+)");
-					if (itemID) then
+					local success, linkType, itemID = pcall(function()
+						local lType, iID = itemLink:match("H?(%a+):(%d+)");
+						return lType, iID;
+					end);
+					if (success and itemID) then
 						tipDataAdded[self] = linkType;
 						LinkTypeFuncs.item(self, itemLink, linkType, itemID);
 					end
@@ -1139,8 +1201,11 @@ local function SetLFGDungeonShortageReward_Hook(self, dungeonID, rewardArg, rewa
 			elseif (rewardType == "currency") then
 				local link = C_CurrencyInfo_GetCurrencyLink(rewardID, numItems);
 				if (link) then
-					local linkType, currencyID, quantity = link:match("H?(%a+):(%d+):(%d+)");
-					if (currencyID) then
+					local success, linkType, currencyID, quantity = pcall(function()
+						local lType, cID, qty = link:match("H?(%a+):(%d+):(%d+)");
+						return lType, cID, qty;
+					end);
+					if (success and currencyID) then
 						tipDataAdded[self] = linkType;
 						LinkTypeFuncs.currency(self, link, linkType, currencyID, quantity);
 					end
@@ -1155,8 +1220,11 @@ local function SetCurrencyByID_Hook(self, currencyID, quantity)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
 		local link = C_CurrencyInfo_GetCurrencyLink(currencyID, quantity);
 		if (link) then
-			local linkType, _currencyID, _quantity = link:match("H?(%a+):(%d+):(%d+)");
-			if (_currencyID) then
+			local success, linkType, _currencyID, _quantity = pcall(function()
+				local lType, cID, qty = link:match("H?(%a+):(%d+):(%d+)");
+				return lType, cID, qty;
+			end);
+			if (success and _currencyID) then
 				tipDataAdded[self] = linkType;
 				LinkTypeFuncs.currency(self, link, linkType, _currencyID, _quantity);
 			end
@@ -1169,8 +1237,11 @@ local function SetCurrencyToken_Hook(self, currencyIndex)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
 		local link = C_CurrencyInfo.GetCurrencyListLink(currencyIndex);
 		if (link) then
-			local linkType, currencyID, quantity = link:match("H?(%a+):(%d+):(%d+)");
-			if (currencyID) then
+			local success, linkType, currencyID, quantity = pcall(function()
+				local lType, cID, qty = link:match("H?(%a+):(%d+):(%d+)");
+				return lType, cID, qty;
+			end);
+			if (success and currencyID) then
 				tipDataAdded[self] = linkType;
 				LinkTypeFuncs.currency(self, link, linkType, currencyID, quantity);
 			end
@@ -1183,8 +1254,11 @@ local function SetCurrencyTokenByID_Hook(self, currencyID)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
 		local link = C_CurrencyInfo_GetCurrencyLink(currencyID);
 		if (link) then
-			local linkType, _currencyID, quantity = link:match("H?(%a+):(%d+):(%d+)");
-			if (_currencyID) then
+			local success, linkType, _currencyID, quantity = pcall(function()
+				local lType, cID, qty = link:match("H?(%a+):(%d+):(%d+)");
+				return lType, cID, qty;
+			end);
+			if (success and _currencyID) then
 				tipDataAdded[self] = linkType;
 				LinkTypeFuncs.currency(self, link, linkType, _currencyID, quantity);
 			end
@@ -1197,8 +1271,11 @@ local function SetConduit_Hook(self, conduitID, conduitRank)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
 		local link = C_Soulbinds.GetConduitHyperlink(conduitID, conduitRank);
 		if (link) then
-			local linkType, _conduitID, _conduitRank = link:match("H?(%a+):(%d+):(%d+)");
-			if (_conduitID) then
+			local success, linkType, _conduitID, _conduitRank = pcall(function()
+				local lType, cID, cRank = link:match("H?(%a+):(%d+):(%d+)");
+				return lType, cID, cRank;
+			end);
+			if (success and _conduitID) then
 				tipDataAdded[self] = linkType;
 				LinkTypeFuncs.conduit(self, link, linkType, _conduitID, _conduitRank);
 			end
@@ -1211,8 +1288,11 @@ local function SetAzeriteEssence_Hook(self, essenceID, essenceRank)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
 		local link = C_AzeriteEssence.GetEssenceHyperlink(essenceID, essenceRank);
 		if (link) then
-			local linkType, _essenceID, _essenceRank = link:match("H?(%a+):(%d+):(%d+)");
-			if (_essenceID) then
+			local success, linkType, _essenceID, _essenceRank = pcall(function()
+				local lType, eID, eRank = link:match("H?(%a+):(%d+):(%d+)");
+				return lType, eID, eRank;
+			end);
+			if (success and _essenceID) then
 				tipDataAdded[self] = linkType;
 				LinkTypeFuncs.azessence(self, link, linkType, _essenceID, _essenceRank);
 
@@ -1241,8 +1321,11 @@ local function SetAzeriteEssenceSlot_Hook(self, slot)
 				
 				local link = C_AzeriteEssence.GetEssenceHyperlink(essenceID, essenceRank);
 				if (link) then
-					local linkType, _essenceID, _essenceRank = link:match("H?(%a+):(%d+):(%d+)");
-					if (_essenceID) then
+					local success, linkType, _essenceID, _essenceRank = pcall(function()
+						local lType, eID, eRank = link:match("H?(%a+):(%d+):(%d+)");
+						return lType, eID, eRank;
+					end);
+					if (success and _essenceID) then
 						tipDataAdded[self] = linkType;
 						LinkTypeFuncs.azessence(self, link, linkType, _essenceID, _essenceRank);
 
@@ -1372,12 +1455,19 @@ local function OnTooltipSetItem(self, ...)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
 		local name, link = LibFroznFunctions:GetItemFromTooltip(self);
 		if (link) then
-			local linkType, itemID = link:match("H?(%a+):(%d+)");
-			if (itemID) then
+			local success, linkType, itemID = pcall(function()
+				local lType, iID = link:match("H?(%a+):(%d+)");
+				return lType, iID;
+			end);
+			if (success and itemID) then
 				tipDataAdded[self] = linkType;
 				if (linkType == "keystone") then
-					local refString = link:match("|H([^|]+)|h") or link;
-					LinkTypeFuncs.keystone(self, link, (":"):split(refString));
+					local success2, refString = pcall(function()
+						return link:match("|H([^|]+)|h") or link;
+					end);
+					if success2 then
+						LinkTypeFuncs.keystone(self, link, (":"):split(refString));
+					end
 				else
 					LinkTypeFuncs.item(self, link, linkType, itemID);
 				end
@@ -1400,8 +1490,11 @@ local function OnTooltipSetSpell(self, ...)
 		if (id) then
 			local link = LibFroznFunctions:GetSpellLink(id);
 			if (link) then
-				local linkType, spellID = link:match("H?(%a+):(%d+)");
-				if (spellID) then
+				local success, linkType, spellID = pcall(function()
+					local lType, sID = link:match("H?(%a+):(%d+)");
+					return lType, sID;
+				end);
+				if (success and spellID) then
 					tipDataAdded[self] = linkType;
 					LinkTypeFuncs.spell(self, false, nil, link, linkType, spellID);
 				end
@@ -1417,8 +1510,10 @@ local function QMLTB_OnEnter_Hook(self)
 		local questID = info.questID;
 		local link = GetQuestLink(questID);
 		if (link) then
-			local level = link:match("H?%a+:%d+:(%d+)");
-			LinkTypeFuncs.quest(gtt, nil, "quest", questID, level);
+			local success, level = pcall(function()
+				return link:match("H?%a+:%d+:(%d+)");
+			end);
+			LinkTypeFuncs.quest(gtt, nil, "quest", questID, success and level or nil);
 		else
 			LinkTypeFuncs.quest(gtt, nil, "quest", questID, nil);
 		end
@@ -1432,8 +1527,10 @@ local function TPOI_OnEnter_Hook(self)
 		local questID = self.questID;
 		local link = GetQuestLink(questID);
 		if (link) then
-			local level = link:match("H?%a+:%d+:(%d+)");
-			LinkTypeFuncs.quest(gtt, nil, "quest", questID, level);
+			local success, level = pcall(function()
+				return link:match("H?%a+:%d+:(%d+)");
+			end);
+			LinkTypeFuncs.quest(gtt, nil, "quest", questID, success and level or nil);
 		else
 			LinkTypeFuncs.quest(gtt, nil, "quest", questID, nil);
 		end
@@ -1447,8 +1544,10 @@ local function QPM_OnMouseEnter_Hook(self)
 		local questID = self.questID;
 		local link = GetQuestLink(questID);
 		if (link) then
-			local level = link:match("H?%a+:%d+:(%d+)");
-			LinkTypeFuncs.quest(gtt, nil, "quest", questID, level);
+			local success, level = pcall(function()
+				return link:match("H?%a+:%d+:(%d+)");
+			end);
+			LinkTypeFuncs.quest(gtt, nil, "quest", questID, success and level or nil);
 		else
 			LinkTypeFuncs.quest(gtt, nil, "quest", questID, nil);
 		end
@@ -1464,8 +1563,10 @@ local function QBPM_UpdateTooltip_Hook(self)
 		if (questID) then
 			local link = GetQuestLink(questID);
 			if (link) then
-				local level = link:match("H?%a+:%d+:(%d+)");
-				LinkTypeFuncs.quest(gtt, nil, "quest", questID, level);
+				local success, level = pcall(function()
+					return link:match("H?%a+:%d+:(%d+)");
+				end);
+				LinkTypeFuncs.quest(gtt, nil, "quest", questID, success and level or nil);
 			else
 				LinkTypeFuncs.quest(gtt, nil, "quest", questID, nil);
 			end
@@ -1490,8 +1591,10 @@ local function GTT_AddQuestRewardsToTooltip_Hook(self, questID, style)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
 		local link = GetQuestLink(questID);
 		if (link) then
-			local level = link:match("H?%a+:%d+:(%d+)");
-			LinkTypeFuncs.quest(self, nil, "quest", questID, level);
+			local success, level = pcall(function()
+				return link:match("H?%a+:%d+:(%d+)");
+			end);
+			LinkTypeFuncs.quest(self, nil, "quest", questID, success and level or nil);
 		else
 			LinkTypeFuncs.quest(self, nil, "quest", questID, nil);
 		end
@@ -1557,8 +1660,11 @@ local function EITT_SetSpellByQuestReward_Hook(self, rewardIndex, questID)
 		if (name) and (texture) then
 			local link = LibFroznFunctions:GetSpellLink(spellID);
 			if (link) then
-				local linkType, _spellID = link:match("H?(%a+):(%d+)");
-				if (_spellID) then
+				local success, linkType, _spellID = pcall(function()
+					local lType, sID = link:match("H?(%a+):(%d+)");
+					return lType, sID;
+				end);
+				if (success and _spellID) then
 					tipDataAdded[targetTooltip] = linkType;
 					LinkTypeFuncs.spell(targetTooltip, false, nil, link, linkType, _spellID);
 				end
@@ -1574,8 +1680,11 @@ local function EITT_SetSpellWithTextureByID_Hook(self, spellID, texture)
 		if (texture) then
 			local link = LibFroznFunctions:GetSpellLink(spellID);
 			if (link) then
-				local linkType, _spellID = link:match("H?(%a+):(%d+)");
-				if (_spellID) then
+				local success, linkType, _spellID = pcall(function()
+					local lType, sID = link:match("H?(%a+):(%d+)");
+					return lType, sID;
+				end);
+				if (success and _spellID) then
 					tipDataAdded[targetTooltip] = linkType;
 					LinkTypeFuncs.spell(targetTooltip, false, nil, link, linkType, _spellID);
 				end
@@ -1590,8 +1699,11 @@ local function EITT_SetCurrencyByID_Hook(self, currencyID, quantity)
 	if (cfg.if_enable) and (not tipDataAdded[targetTooltip]) and (targetTooltip:IsShown()) then
 		local link = C_CurrencyInfo_GetCurrencyLink(currencyID, quantity);
 		if (link) then
-			local linkType, _currencyID, _quantity = link:match("H?(%a+):(%d+):(%d+)");
-			if (_currencyID) then
+			local success, linkType, _currencyID, _quantity = pcall(function()
+				local lType, cID, qty = link:match("H?(%a+):(%d+):(%d+)");
+				return lType, cID, qty;
+			end);
+			if (success and _currencyID) then
 				tipDataAdded[targetTooltip] = linkType;
 				LinkTypeFuncs.currency(targetTooltip, link, linkType, _currencyID, _quantity);
 			end
@@ -1610,8 +1722,11 @@ local function DUODSM_OnEnter_Hook(self)
 			if (itemID) then
 				local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, itemSellPrice, classID, subClassID, bindType, expansionID, setID, isCraftingReagent = C_Item.GetItemInfo(itemID);
 				if (itemLink) then
-					local linkType, _itemID = itemLink:match("H?(%a+):(%d+)");
-					if (_itemID) then
+					local success, linkType, _itemID = pcall(function()
+						local lType, iID = itemLink:match("H?(%a+):(%d+)");
+						return lType, iID;
+					end);
+					if (success and _itemID) then
 						tipDataAdded[gtt] = linkType;
 						LinkTypeFuncs.item(gtt, itemLink, linkType, _itemID);
 					end
@@ -1638,8 +1753,11 @@ local function TDM_OnEnter_Hook(self)
 		if (spellID) then
 			local link = LibFroznFunctions:GetSpellLink(spellID);
 			if (link) then
-				local linkType, _spellID = link:match("H?(%a+):(%d+)");
-				if (_spellID) then
+				local success, linkType, _spellID = pcall(function()
+					local lType, sID = link:match("H?(%a+):(%d+)");
+					return lType, sID;
+				end);
+				if (success and _spellID) then
 					tipDataAdded[gtt] = linkType;
 					LinkTypeFuncs.spell(gtt, false, nil, link, linkType, _spellID);
 				end
@@ -1685,8 +1803,11 @@ local function PCPCTM_OnEnter_Hook(self)
 		if (spellID) then
 			local link = LibFroznFunctions:GetSpellLink(spellID);
 			if (link) then
-				local linkType, _spellID = link:match("H?(%a+):(%d+)");
-				if (_spellID) then
+				local success, linkType, _spellID = pcall(function()
+					local lType, sID = link:match("H?(%a+):(%d+)");
+					return lType, sID;
+				end);
+				if (success and _spellID) then
 					tipDataAdded[gtt] = linkType;
 					LinkTypeFuncs.spell(gtt, false, nil, link, linkType, _spellID);
 				end
@@ -1856,8 +1977,10 @@ local function WQTT_OnEnter_Hook(self)
 		if (questID) then
 			local link = GetQuestLink(questID);
 			if (link) then
-				local level = link:match("H?%a+:%d+:(%d+)");
-				LinkTypeFuncs.quest(gtt, nil, "quest", questID, level);
+				local success, level = pcall(function()
+					return link:match("H?%a+:%d+:(%d+)");
+				end);
+				LinkTypeFuncs.quest(gtt, nil, "quest", questID, success and level or nil);
 			else
 				LinkTypeFuncs.quest(gtt, nil, "quest", questID, nil);
 			end
@@ -2898,14 +3021,18 @@ function LinkTypeFuncs:spell(isAura, source, link, linkType, spellID)
 	local showAuraCaster = (isAura and cfg.if_showAuraCaster and UnitExists(source));
 	
 	if (showAuraCaster) then
-		local sourceName = UnitName(source);
-		
+		local successName, sourceName = pcall(UnitName, source);
+		if not successName then sourceName = nil; end
+
 		if (sourceName) and (sourceName ~= TTIF_UnknownObject and sourceName ~= "") then
 			local colorAuraCaster;
-			
-			if (UnitIsPlayer(source)) and (cfg.if_colorAuraCasterByClass) then
-				local sourceClassID = select(3, UnitClass(source));
-				colorAuraCaster = LibFroznFunctions:GetClassColor(sourceClassID, nil, cfg.enableCustomClassColors and TT_ExtendedConfig.customClassColors or nil) or CreateColor(unpack(cfg.if_infoColor));
+
+			local successPlayer, isSourcePlayer = pcall(UnitIsPlayer, source);
+			if (successPlayer and isSourcePlayer) and (cfg.if_colorAuraCasterByClass) then
+				local successClass, _, _, sourceClassID = pcall(UnitClass, source);
+				if successClass and sourceClassID then
+					colorAuraCaster = LibFroznFunctions:GetClassColor(sourceClassID, nil, cfg.enableCustomClassColors and TT_ExtendedConfig.customClassColors or nil) or CreateColor(unpack(cfg.if_infoColor));
+				end
 			end
 			
 			if (not colorAuraCaster) and (cfg.if_colorAuraCasterByReaction) then
