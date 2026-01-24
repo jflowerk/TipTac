@@ -2095,8 +2095,9 @@ function tt:AddTipToCache(tip, frameName, tipParams)
 					if (tip:IsForbidden()) then
 						return;
 					end
-					
-					tip.OnBackdropSizeChanged(...);
+
+					-- Protect against secret values in width/height parameters
+					pcall(tip.OnBackdropSizeChanged, ...);
 				end);
 			end);
 		end
