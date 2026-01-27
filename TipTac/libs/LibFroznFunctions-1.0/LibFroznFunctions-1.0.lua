@@ -3803,7 +3803,12 @@ function LibFroznFunctions:UpdateUnitRecord(unitRecord, newUnitID)
 	local success, unitGUID = pcall(UnitGUID, unitID);
 	unitGUID = success and unitGUID or nil;
 
-	if (not unitGUID) or (unitGUID ~= unitRecord.guid) then
+	-- Protect against secret values when comparing GUIDs
+	local compareSuccess, guidMatches = pcall(function()
+		return unitGUID and unitGUID == unitRecord.guid;
+	end);
+
+	if (not unitGUID) or (not compareSuccess) or (not guidMatches) then
 		return;
 	end
 	
