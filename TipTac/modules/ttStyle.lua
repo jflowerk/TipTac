@@ -173,18 +173,22 @@ function ttStyle:RemoveUnwantedLinesFromTip(tip, unitRecord)
 	for i = 2, tip:NumLines() do
 		local gttLine = _G["GameTooltipTextLeft" .. i];
 		local gttLineText = gttLine:GetText();
-		
+
 		if (type(gttLineText) == "string") then
-			local isGttLineTextUnitPopupRightClick = (hideRightClickForFrameSettingsTextInUnitTip) and (gttLineText == UNIT_POPUP_RIGHT_CLICK);
-			
-			if (isGttLineTextUnitPopupRightClick) or
-					((gttLineText == FACTION_ALLIANCE) or (gttLineText == FACTION_HORDE) or (gttLineText == FACTION_NEUTRAL)) or
-					(cfg.hidePvpText) and (gttLineText == PVP_ENABLED) or
-					(hideCreatureTypeIfNoCreatureFamily) and (gttLineText == creatureType) or
-					(hideSpecializationAndClassText) and ((gttLineText == unitRecord.className) or (specNames:Contains(gttLineText:match("^(.+) " .. unitRecord.className .. "$")))) then
-				
+			-- Protect against secret values when comparing text
+			local compareSuccess, isGttLineTextUnitPopupRightClick, isMatch = pcall(function()
+				local isRightClick = (hideRightClickForFrameSettingsTextInUnitTip) and (gttLineText == UNIT_POPUP_RIGHT_CLICK);
+				local shouldHide = isRightClick or
+						((gttLineText == FACTION_ALLIANCE) or (gttLineText == FACTION_HORDE) or (gttLineText == FACTION_NEUTRAL)) or
+						(cfg.hidePvpText) and (gttLineText == PVP_ENABLED) or
+						(hideCreatureTypeIfNoCreatureFamily) and (gttLineText == creatureType) or
+						(hideSpecializationAndClassText) and ((gttLineText == unitRecord.className) or (specNames:Contains(gttLineText:match("^(.+) " .. unitRecord.className .. "$"))));
+				return isRightClick, shouldHide;
+			end);
+
+			if compareSuccess and isMatch then
 				gttLine:SetText(nil);
-				
+
 				if (isGttLineTextUnitPopupRightClick) and (i > 1) then
 					_G["GameTooltipTextLeft" .. (i - 1)]:SetText(nil);
 				end
