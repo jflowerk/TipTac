@@ -356,9 +356,14 @@ end
 function LibFroznFunctions:GetUnitFromTooltip(tooltip)
 	-- since df 10.0.2
 	if (TooltipUtil) then
-		return TooltipUtil.GetDisplayedUnit(tooltip);
+		-- Protect against secret values in TooltipUtil.GetDisplayedUnit
+		local success, unitToken, unitGUID = pcall(TooltipUtil.GetDisplayedUnit, tooltip);
+		if success then
+			return unitToken, unitGUID;
+		end
+		return nil, nil;
 	end
-	
+
 	-- before df 10.0.2
 	return tooltip:GetUnit();
 end
@@ -391,7 +396,9 @@ end
 function LibFroznFunctions:GetItemFromTooltip(tooltip)
 	-- since df 10.0.2
 	if (TooltipUtil) then
-		if (tooltip:IsTooltipType(Enum.TooltipDataType.Toy)) then -- see TooltipUtil.GetDisplayedItem() in "TooltipUtil.lua"
+		-- Protect against secret values in IsTooltipType
+		local toySuccess, isToyTooltip = pcall(tooltip.IsTooltipType, tooltip, Enum.TooltipDataType.Toy);
+		if toySuccess and isToyTooltip then -- see TooltipUtil.GetDisplayedItem() in "TooltipUtil.lua"
 			local tooltipData = tooltip:GetTooltipData();
 			local itemLink = C_ToyBox.GetToyLink(tooltipData.id);
 			if (itemLink) then
@@ -399,10 +406,15 @@ function LibFroznFunctions:GetItemFromTooltip(tooltip)
 				return name, itemLink, tooltipData.id;
 			end
 		end
-		
-		return TooltipUtil.GetDisplayedItem(tooltip);
+
+		-- Protect against secret values in TooltipUtil.GetDisplayedItem
+		local success, itemName, itemLink, itemID = pcall(TooltipUtil.GetDisplayedItem, tooltip);
+		if success then
+			return itemName, itemLink, itemID;
+		end
+		return nil, nil, nil;
 	end
-	
+
 	-- before df 10.0.2
 	return tooltip:GetItem();
 end
