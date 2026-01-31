@@ -2098,10 +2098,8 @@ function tt:AddTipToCache(tip, frameName, tipParams)
 
 					-- Protect against secret values in width/height parameters
 					-- If width or height are secret values, OnBackdropSizeChanged will fail
-					-- Wrap in pcall to suppress the error
-					if width and height then
-						pcall(tip.OnBackdropSizeChanged, tip, width, height);
-					end
+					-- Don't check width/height existence as even that can fail with secret values
+					pcall(tip.OnBackdropSizeChanged, tip, width, height);
 				end);
 			end);
 		end
