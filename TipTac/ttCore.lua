@@ -2454,7 +2454,9 @@ function tt:SetScaleToTip(tip, noFireGroupEvent)
 
 		if not success then
 			-- If we can't calculate dimensions due to secret values, skip scale reduction
+			isSettingScaleToTip = true;
 			tip:SetScale(newTipScale);
+			isSettingScaleToTip = false;
 			return;
 		end
 		
