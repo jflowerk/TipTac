@@ -2429,33 +2429,35 @@ function tt:SetScaleToTip(tip, noFireGroupEvent)
 	if (not tipParams.isFromLibQTip) then -- don't reduce scale if frame belongs to LibQTip-1.0, because tip:UpdateScrolling() from LibQTip-1.0 will resize the tooltip to fit the screen and show a scrollbar if needed.
 		LibFroznFunctions:RecalculateSizeOfGameTooltip(tip);
 
-		-- Protect against secret values from GetWidth/GetHeight
-		local success, tipWidth, tipHeight = pcall(function()
-			return tip:GetWidth(), tip:GetHeight();
+		-- Protect against secret values from GetWidth/GetHeight and arithmetic operations
+		local success, tipWidthWithNewScaling, tipHeightWithNewScaling = pcall(function()
+			local width = tip:GetWidth();
+			local height = tip:GetHeight();
+			local widthWithScaling = width * newTipEffectiveScale;
+			local heightWithScaling = height * newTipEffectiveScale;
+
+			local leftOffset, rightOffset, topOffset, bottomOffset = tip:GetClampRectInsets();
+
+			if (leftOffset) then
+				widthWithScaling = widthWithScaling + leftOffset * newTipEffectiveScale;
+			end
+			if (rightOffset) then
+				widthWithScaling = widthWithScaling + rightOffset * newTipEffectiveScale;
+			end
+			if (topOffset) then
+				heightWithScaling = heightWithScaling + topOffset * newTipEffectiveScale;
+			end
+			if (bottomOffset) then
+				heightWithScaling = heightWithScaling + bottomOffset * newTipEffectiveScale;
+			end
+
+			return widthWithScaling, heightWithScaling;
 		end);
 
 		if not success then
-			-- If we can't get dimensions due to secret values, skip scale reduction
+			-- If we can't calculate dimensions due to secret values, skip scale reduction
 			tip:SetScale(newTipScale);
 			return;
-		end
-
-		local tipWidthWithNewScaling = tipWidth * newTipEffectiveScale;
-		local tipHeightWithNewScaling = tipHeight * newTipEffectiveScale;
-		
-		local leftOffset, rightOffset, topOffset, bottomOffset = tip:GetClampRectInsets();
-		
-		if (leftOffset) then
-			tipWidthWithNewScaling = tipWidthWithNewScaling + leftOffset * newTipEffectiveScale;
-		end
-		if (rightOffset) then
-			tipWidthWithNewScaling = tipWidthWithNewScaling + rightOffset * newTipEffectiveScale;
-		end
-		if (topOffset) then
-			tipHeightWithNewScaling = tipHeightWithNewScaling + topOffset * newTipEffectiveScale;
-		end
-		if (bottomOffset) then
-			tipHeightWithNewScaling = tipHeightWithNewScaling + bottomOffset * newTipEffectiveScale;
 		end
 		
 		local UIParentWidth = UIParent:GetWidth() * TT_UIScale;

@@ -346,9 +346,18 @@ local function ttSetIconPoint(tooltip, onlyAdjustForCHWidth)
 		if (onlyAdjustForCHWidth) and (not cfg.if_iconOffsetX_CH_addCHWidth) then
 			return;
 		end
-		
+
+		-- Protect against secret values from CompareHeader:GetWidth()
+		local success, offsetX = pcall(function()
+			return cfg.if_iconOffsetX_CH + (cfg.if_iconOffsetX_CH_addCHWidth and tooltip.CompareHeader:GetWidth() or 0);
+		end);
+
+		if not success then
+			offsetX = cfg.if_iconOffsetX_CH;
+		end
+
 		tooltip.ttIcon:ClearAllPoints();
-		tooltip.ttIcon:SetPoint(cfg.if_iconAnchor, tooltip, cfg.if_iconTooltipAnchor, cfg.if_iconOffsetX_CH + (cfg.if_iconOffsetX_CH_addCHWidth and tooltip.CompareHeader:GetWidth() or 0), cfg.if_iconOffsetY_CH);
+		tooltip.ttIcon:SetPoint(cfg.if_iconAnchor, tooltip, cfg.if_iconTooltipAnchor, offsetX, cfg.if_iconOffsetY_CH);
 	elseif (not onlyAdjustForCHWidth) then
 		tooltip.ttIcon:ClearAllPoints();
 		tooltip.ttIcon:SetPoint(cfg.if_iconAnchor, tooltip, cfg.if_iconTooltipAnchor, cfg.if_iconOffsetX, cfg.if_iconOffsetY);
