@@ -3040,12 +3040,17 @@ function LinkTypeFuncs:spell(isAura, source, link, linkType, spellID)
 	
 	-- Caster
 	local showAuraCaster = (isAura and cfg.if_showAuraCaster and UnitExists(source));
-	
+
 	if (showAuraCaster) then
 		local successName, sourceName = pcall(UnitName, source);
 		if not successName then sourceName = nil; end
 
-		if (sourceName) and (sourceName ~= TTIF_UnknownObject and sourceName ~= "") then
+		-- Protect against secret values when comparing sourceName
+		local compareSuccess, hasValidName = pcall(function()
+			return sourceName and sourceName ~= TTIF_UnknownObject and sourceName ~= "";
+		end);
+
+		if compareSuccess and hasValidName then
 			local colorAuraCaster;
 
 			local successPlayer, isSourcePlayer = pcall(UnitIsPlayer, source);
@@ -3055,16 +3060,16 @@ function LinkTypeFuncs:spell(isAura, source, link, linkType, spellID)
 					colorAuraCaster = LibFroznFunctions:GetClassColor(sourceClassID, nil, cfg.enableCustomClassColors and TT_ExtendedConfig.customClassColors or nil) or CreateColor(unpack(cfg.if_infoColor));
 				end
 			end
-			
+
 			if (not colorAuraCaster) and (cfg.if_colorAuraCasterByReaction) then
 				local sourceReactionIndex = LibFroznFunctions:GetUnitReactionIndex(source);
 				colorAuraCaster = (cfg["colorReactText"..sourceReactionIndex] and CreateColor(unpack(cfg["colorReactText"..sourceReactionIndex]))) or CreateColor(unpack(cfg.if_infoColor));
 			end
-			
+
 			if (not colorAuraCaster) then
 				colorAuraCaster = CreateColor(unpack(cfg.if_infoColor));
 			end
-			
+
 			self:AddLine(format("Caster: %s", colorAuraCaster:WrapTextInColorCode(sourceName)), unpack(cfg.if_infoColor));
 		end
 	end
