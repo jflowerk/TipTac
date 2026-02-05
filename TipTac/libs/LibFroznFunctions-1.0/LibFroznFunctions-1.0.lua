@@ -3060,8 +3060,11 @@ function LibFroznFunctions:RecalculateSizeOfGameTooltip(tip)
 	if (tip:IsForbidden()) or (type(tip.GetObjectType) ~= "function") or (tip:GetObjectType() ~= "GameTooltip") then
 		return;
 	end
-	
-	tip:SetPadding(tip:GetPadding());
+
+	-- Protect against secret values from GetPadding
+	pcall(function()
+		tip:SetPadding(tip:GetPadding());
+	end);
 	tip:GetWidth(); -- possible blizzard bug (tested under df 10.2.7): tooltip is sometimes invisible after SetPadding() is called in OnShow. Calling e.g. GetWidth() after SetPadding() fixes this. reproduced with addon "Total RP 3" where the player's unit tooltip isn't shown any more.
 end
 
