@@ -2090,19 +2090,16 @@ function tt:AddTipToCache(tip, frameName, tipParams)
 					return;
 				end
 				
-				tip:HookScript("OnSizeChanged", function(self, width, height)
-					-- check if insecure interaction with the tip is currently forbidden
-					if (tip:IsForbidden()) then
-						return;
-					end
-
-					-- Protect against secret values in width/height parameters
-					-- Call OnBackdropSizeChanged without parameters to let it calculate size internally
-					-- This avoids passing potentially secret width/height values
-					if tip.OnBackdropSizeChanged then
-						pcall(tip.OnBackdropSizeChanged, tip);
-					end
-				end);
+				-- OnSizeChanged hook disabled to prevent secret value errors in OnBackdropSizeChanged
+				-- The Backdrop system will handle size changes automatically
+				-- tip:HookScript("OnSizeChanged", function(self, width, height)
+				-- 	if (tip:IsForbidden()) then
+				-- 		return;
+				-- 	end
+				-- 	if tip.OnBackdropSizeChanged then
+				-- 		pcall(tip.OnBackdropSizeChanged, tip);
+				-- 	end
+				-- end);
 			end);
 		end
 		
