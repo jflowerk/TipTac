@@ -1226,7 +1226,24 @@ local pushArray = {
 			return itemsRemoved;
 		end,
 		Concat = function(tab, sep)
-			return table.concat(tab, sep);
+			-- Protect against secret values in table
+			local success, result = pcall(table.concat, tab, sep);
+			if success then
+				return result;
+			end
+			-- If concat fails due to secret values, filter them out and try again
+			local filtered = {};
+			for i = 1, #tab do
+				local successCheck, value = pcall(function() return tab[i]; end);
+				if successCheck and value ~= nil then
+					-- Try to check if it's a secret value by attempting string concatenation
+					local isValid = pcall(function() return "" .. value; end);
+					if isValid then
+						table.insert(filtered, value);
+					end
+				end
+			end
+			return table.concat(filtered, sep or "");
 		end
 	},
 	__newindex = function(tab, key, value)
