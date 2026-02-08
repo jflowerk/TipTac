@@ -2257,6 +2257,23 @@ function CH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4, 
 
 	local isProtected = E:IsSecretValue(arg2)
 
+	-- Helper function for safe comparison with secret values
+	local function SafeCompare(value, compareWith)
+		if E:IsSecretValue(value) then
+			return false
+		end
+		local success, result = pcall(function() return value == compareWith end)
+		return success and result
+	end
+
+	local function SafeNotEqual(value, compareWith)
+		if E:IsSecretValue(value) then
+			return true -- If secret, assume not equal
+		end
+		local success, result = pcall(function() return value ~= compareWith end)
+		return success and result
+	end
+
 	if _G.TextToSpeechFrame_MessageEventHandler and notChatHistory then
 		_G.TextToSpeechFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17)
 	end
@@ -2301,8 +2318,8 @@ function CH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4, 
 
 		if chatType == 'VOICE_TEXT' and not GetCVarBool('speechToText') then
 			return
-		elseif chatType == 'COMMUNITIES_CHANNEL' or ((strsub(chatType, 1, 7) == 'CHANNEL') and (chatType ~= 'CHANNEL_LIST') and ((E:NotSecretValue(arg1) and arg1 ~= 'INVITE') or (chatType ~= 'CHANNEL_NOTICE_USER'))) then
-			if arg1 == 'WRONG_PASSWORD' then
+		elseif chatType == 'COMMUNITIES_CHANNEL' or ((strsub(chatType, 1, 7) == 'CHANNEL') and (chatType ~= 'CHANNEL_LIST') and ((E:NotSecretValue(arg1) and not SafeCompare(arg1, 'INVITE')) or (chatType ~= 'CHANNEL_NOTICE_USER'))) then
+			if SafeCompare(arg1, 'WRONG_PASSWORD') then
 				local _, popup = _G.StaticPopup_Visible('CHAT_CHANNEL_PASSWORD')
 				if popup and strupper(popup.data) == strupper(arg9) then
 					return -- Don't display invalid password messages if we're going to prompt for a password (bug 102312)
@@ -2319,7 +2336,7 @@ function CH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4, 
 						infoType = 'CHANNEL'..arg8
 						info = _G.ChatTypeInfo[infoType]
 
-						if chatType == 'CHANNEL_NOTICE' and arg1 == 'YOU_LEFT' then
+						if chatType == 'CHANNEL_NOTICE' and SafeCompare(arg1, 'YOU_LEFT') then
 							frame.channelList[index] = nil
 							frame.zoneChannelList[index] = nil
 						end
@@ -2419,19 +2436,19 @@ function CH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4, 
 			if arg5 ~= '' then
 				-- TWO users in this notice (E.G. x kicked y)
 				frame:AddMessage(format(globalstring, arg8, arg4, arg2, arg5), info.r, info.g, info.b, info.id, nil, nil, nil, nil, nil, isHistory, historyTime)
-			elseif arg1 == 'INVITE' then
+			elseif SafeCompare(arg1, 'INVITE') then
 				frame:AddMessage(format(globalstring, arg4, arg2), info.r, info.g, info.b, info.id, nil, nil, nil, nil, nil, isHistory, historyTime)
 			else
 				frame:AddMessage(format(globalstring, arg8, arg4, arg2), info.r, info.g, info.b, info.id, nil, nil, nil, nil, nil, isHistory, historyTime)
 			end
-			if arg1 == 'INVITE' and GetCVarBool('blockChannelInvites') then
+			if SafeCompare(arg1, 'INVITE') and GetCVarBool('blockChannelInvites') then
 				frame:AddMessage(_G.CHAT_MSG_BLOCK_CHAT_CHANNEL_INVITE, info.r, info.g, info.b, info.id, nil, nil, nil, nil, nil, isHistory, historyTime)
 			end
 		elseif chatType == 'CHANNEL_NOTICE' then
 			local accessID = CH:GetAccessID(chatGroup, arg8)
 			local typeID = CH:GetAccessID(infoType, arg8, arg12)
 
-			if E.Retail and arg1 == 'YOU_CHANGED' and GetChannelRuleset(arg8) == CHATCHANNELRULESET_MENTOR then
+			if E.Retail and SafeCompare(arg1, 'YOU_CHANGED') and GetChannelRuleset(arg8) == CHATCHANNELRULESET_MENTOR then
 				if frame.UpdateDefaultChatTarget then
 					frame:UpdateDefaultChatTarget()
 				else
@@ -2440,12 +2457,12 @@ function CH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4, 
 
 				frame.editBox:UpdateNewcomerEditBoxHint()
 			else
-				if E.Retail and arg1 == 'YOU_LEFT' then
+				if E.Retail and SafeCompare(arg1, 'YOU_LEFT') then
 					frame.editBox:UpdateNewcomerEditBoxHint(arg8)
 				end
 
 				local globalstring
-				if arg1 == 'TRIAL_RESTRICTED' then
+				if SafeCompare(arg1, 'TRIAL_RESTRICTED') then
 					globalstring = _G.CHAT_TRIAL_RESTRICTED_NOTICE_TRIAL
 				else
 					globalstring = _G['CHAT_'..arg1..'_NOTICE_BN']
@@ -2469,13 +2486,13 @@ function CH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4, 
 				end
 
 				local message
-				if arg1 == 'FRIEND_REQUEST' then
+				if SafeCompare(arg1, 'FRIEND_REQUEST') then
 					message = globalstring
-				elseif arg1 == 'FRIEND_PENDING' then
+				elseif SafeCompare(arg1, 'FRIEND_PENDING') then
 					message = format(_G.BN_INLINE_TOAST_FRIEND_PENDING, BNGetNumFriendInvites())
-				elseif arg1 == 'FRIEND_REMOVED' or arg1 == 'BATTLETAG_FRIEND_REMOVED' then
+				elseif SafeCompare(arg1, 'FRIEND_REMOVED') or SafeCompare(arg1, 'BATTLETAG_FRIEND_REMOVED') then
 					message = format(globalstring, arg2)
-				elseif arg1 == 'FRIEND_ONLINE' or arg1 == 'FRIEND_OFFLINE' then
+				elseif SafeCompare(arg1, 'FRIEND_ONLINE') or SafeCompare(arg1, 'FRIEND_OFFLINE') then
 					local accountInfo = C_BattleNet_GetAccountInfoByID(arg13)
 					local gameInfo = accountInfo and accountInfo.gameAccountInfo
 					if gameInfo and gameInfo.clientProgram and gameInfo.clientProgram ~= '' then
@@ -2542,7 +2559,7 @@ function CH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4, 
 
 			-- beep boops
 			local historyType = notChatHistory and not CH.SoundTimer and not strfind(event, '_INFORM') and historyTypes[event]
-			local alertAllow = isProtected or arg2 ~= PLAYER_NAME
+			local alertAllow = isProtected or SafeNotEqual(arg2, PLAYER_NAME)
 			local alertType = (historyType ~= 'CHANNEL' and CH.db.channelAlerts[historyType]) or (historyType == 'CHANNEL' and CH.db.channelAlerts.CHANNEL[arg9])
 			if alertType and alertType ~= 'None' and alertAllow and (not CH.db.noAlertInCombat or not InCombatLockdown()) then
 				CH.SoundTimer = E:Delay(5, CH.ThrottleSound)
