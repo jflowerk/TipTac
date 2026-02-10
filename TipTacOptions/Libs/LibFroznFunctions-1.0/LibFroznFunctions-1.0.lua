@@ -2531,13 +2531,21 @@ function LibFroznFunctions:RefreshAnchorShoppingTooltips(tip)
 	
 	-- local leftPos = sideAnchorFrame:GetLeft(); -- removed
 	-- local rightPos = sideAnchorFrame:GetRight(); -- removed
-	local leftPos = (sideAnchorFrame:GetLeft() ~= nil) and (sideAnchorFrame:GetLeft() * sideAnchorFrame:GetEffectiveScale()); -- added
-	local rightPos = (sideAnchorFrame:GetRight() ~= nil) and (sideAnchorFrame:GetRight() * sideAnchorFrame:GetEffectiveScale()); -- added
-	
+	-- Protect against secret values from GetLeft/GetRight/GetEffectiveScale
+	local leftPos, rightPos
+	pcall(function()
+		leftPos = (sideAnchorFrame:GetLeft() ~= nil) and (sideAnchorFrame:GetLeft() * sideAnchorFrame:GetEffectiveScale())
+		rightPos = (sideAnchorFrame:GetRight() ~= nil) and (sideAnchorFrame:GetRight() * sideAnchorFrame:GetEffectiveScale())
+	end)
+
 	-- local selfLeftPos = tooltip:GetLeft(); -- removed
 	-- local selfRightPos = tooltip:GetRight(); -- removed
-	local selfLeftPos = (tooltip:GetLeft() ~= nil) and (tooltip:GetLeft() * tooltip:GetEffectiveScale()); -- added
-	local selfRightPos = (tooltip:GetRight() ~= nil) and (tooltip:GetRight() * tooltip:GetEffectiveScale()); -- added
+	-- Protect against secret values from GetLeft/GetRight/GetEffectiveScale
+	local selfLeftPos, selfRightPos
+	pcall(function()
+		selfLeftPos = (tooltip:GetLeft() ~= nil) and (tooltip:GetLeft() * tooltip:GetEffectiveScale())
+		selfRightPos = (tooltip:GetRight() ~= nil) and (tooltip:GetRight() * tooltip:GetEffectiveScale())
+	end)
 	
 	-- if we get the Left, we have the Right
 	if leftPos and selfLeftPos then
