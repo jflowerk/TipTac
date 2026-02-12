@@ -4151,18 +4151,20 @@ function LibFroznFunctions:GetPlayerGuildClubMemberInfo(unitGUID)
 			end
 			
 			if (playerGuildClubIDCache) then
-				-- Protect against secret values from GetClubMembers
-				local success, playerGuildClubMemberIDs = pcall(C_Club.GetClubMembers, playerGuildClubIDCache);
+				-- Protect against secret values from GetClubMembers - wrap entire operation in pcall
+				pcall(function()
+					local playerGuildClubMemberIDs = C_Club.GetClubMembers(playerGuildClubIDCache);
 
-				if success and playerGuildClubMemberIDs and type(playerGuildClubMemberIDs) == "table" then
-					for _, playerGuildClubMemberID in ipairs(playerGuildClubMemberIDs) do
-						local playerGuildClubMemberInfo = C_Club.GetMemberInfo(playerGuildClubIDCache, playerGuildClubMemberID);
+					if playerGuildClubMemberIDs and type(playerGuildClubMemberIDs) == "table" then
+						for _, playerGuildClubMemberID in ipairs(playerGuildClubMemberIDs) do
+							local playerGuildClubMemberInfo = C_Club.GetMemberInfo(playerGuildClubIDCache, playerGuildClubMemberID);
 
-						if (playerGuildClubMemberInfo) and (playerGuildClubMemberInfo.guid) then
-							playerGuildClubMemberInfosCache[playerGuildClubMemberInfo.guid] = playerGuildClubMemberInfo;
+							if (playerGuildClubMemberInfo) and (playerGuildClubMemberInfo.guid) then
+								playerGuildClubMemberInfosCache[playerGuildClubMemberInfo.guid] = playerGuildClubMemberInfo;
+							end
 						end
 					end
-				end
+				end)
 			end
 		end
 		
