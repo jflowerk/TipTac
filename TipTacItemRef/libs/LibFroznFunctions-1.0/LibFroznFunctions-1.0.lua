@@ -3138,9 +3138,8 @@ function LibFroznFunctions:GetTooltipInfo(functionName, ...)
 	local tooltipData = LibFroznFunctions:GetTooltipDataFromScanTip("GetTooltipInfo", accessors[functionName], ...);
 	
 	getTooltipInfoInProgress = false;
-	
+
 	return tooltipData;
-end
 end
 
 -- get tooltip data from scanning tooltip
