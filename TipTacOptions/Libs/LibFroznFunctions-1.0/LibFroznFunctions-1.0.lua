@@ -3102,14 +3102,28 @@ end
 --             .leftText    left text of line
 --             .rightText   right text of line
 --         returns nil if no tooltip data is available.
+local getTooltipInfoInProgress = false;
+
 function LibFroznFunctions:GetTooltipInfo(functionName, ...)
+	-- Prevent infinite recursion from scanning tooltip hooks
+	if getTooltipInfoInProgress then
+		return nil;
+	end
+
+	getTooltipInfoInProgress = true;
+
 	-- get tooltip info from C_TooltipInfo
 	
 	-- since df 10.0.2
 	if (C_TooltipInfo) and (type(C_TooltipInfo[functionName]) == "function") then
-		local tooltipData = C_TooltipInfo[functionName](...);
+		local success, tooltipData = pcall(C_TooltipInfo[functionName], ...);
+		getTooltipInfoInProgress = false;
 		
-		return tooltipData;
+		if success then
+			return tooltipData;
+		else
+			return nil;
+		end
 	end
 	
 	-- before df 10.0.2
@@ -3123,7 +3137,10 @@ function LibFroznFunctions:GetTooltipInfo(functionName, ...)
 	
 	local tooltipData = LibFroznFunctions:GetTooltipDataFromScanTip("GetTooltipInfo", accessors[functionName], ...);
 	
+	getTooltipInfoInProgress = false;
+	
 	return tooltipData;
+end
 end
 
 -- get tooltip data from scanning tooltip
