@@ -426,7 +426,11 @@ function ttStyle:GeneratePlayerLines(tip, currentDisplayParams, unitRecord, firs
 	lineName:Push(nameColor:WrapTextInColorCode(name));
 	-- dc, afk or dnd
 	if (cfg.showStatus) then
-		local status = (not UnitIsConnected(unitRecord.id) and " <DC>") or (UnitIsAFK(unitRecord.id) and " <AFK>") or (UnitIsDND(unitRecord.id) and " <DND>");
+		-- Protect against secret boolean values from Unit status functions
+		local status
+		pcall(function()
+			status = (not UnitIsConnected(unitRecord.id) and " <DC>") or (UnitIsAFK(unitRecord.id) and " <AFK>") or (UnitIsDND(unitRecord.id) and " <DND>")
+		end)
 		if (status) then
 			lineName:Push(HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(status));
 		end
