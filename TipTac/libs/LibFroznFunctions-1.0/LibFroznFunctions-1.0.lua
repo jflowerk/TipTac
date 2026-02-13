@@ -1234,16 +1234,28 @@ local pushArray = {
 			-- If concat fails due to secret values, filter them out and try again
 			local filtered = {};
 			for i = 1, #tab do
-				local successCheck, value = pcall(function() return tab[i]; end);
-				if successCheck and value ~= nil then
-					-- Try to check if it's a secret value by attempting string concatenation
-					local isValid = pcall(function() return "" .. value; end);
-					if isValid then
+				-- Use pcall to safely validate the value can be converted to a string
+				local canConvert = pcall(function()
+					local v = tab[i];
+					-- Check for nil without using comparison operators that could be tainted
+					if not v then
+						error("nil or invalid value");
+					end
+					-- Try string concatenation to test if it's a secret value
+					local _ = "" .. v;
+				end);
+
+				if canConvert then
+					-- Only add if we successfully validated it
+					local success, value = pcall(function() return tab[i]; end);
+					if success then
 						table.insert(filtered, value);
 					end
 				end
 			end
-			return table.concat(filtered, sep or "");
+			-- Final safety: wrap the concat in another pcall to catch any remaining issues
+			local finalSuccess, finalResult = pcall(table.concat, filtered, sep or "");
+			return finalSuccess and finalResult or "";
 		end
 	},
 	__newindex = function(tab, key, value)
