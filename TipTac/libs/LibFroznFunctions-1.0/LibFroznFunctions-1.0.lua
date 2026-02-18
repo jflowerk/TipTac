@@ -2571,17 +2571,25 @@ function LibFroznFunctions:RefreshAnchorShoppingTooltips(tip)
 	-- sometimes the sideAnchorFrame is an actual tooltip, and sometimes it's a script region, so make sure we're getting the actual anchor type
 	-- local anchorType = sideAnchorFrame.GetAnchorType and sideAnchorFrame:GetAnchorType() or tooltip:GetAnchorType(); -- moved to top
 	
+	-- Protect against secret values from GetWidth/GetEffectiveScale
 	local totalWidth = 0;
 	if primaryShown then
-		totalWidth = totalWidth + primaryTooltip:GetWidth() * primaryTooltip:GetEffectiveScale();
+		pcall(function()
+			totalWidth = totalWidth + primaryTooltip:GetWidth() * primaryTooltip:GetEffectiveScale();
+		end)
 	end
 	if secondaryShown then
-		totalWidth = totalWidth + secondaryTooltip:GetWidth() * primaryTooltip:GetEffectiveScale();
+		pcall(function()
+			totalWidth = totalWidth + secondaryTooltip:GetWidth() * primaryTooltip:GetEffectiveScale();
+		end)
 	end
-	
+
 	local rightDist = 0;
 	-- local screenWidth = GetScreenWidth(); -- removed
-	local screenWidth = GetScreenWidth() * UIParent:GetEffectiveScale(); -- added
+	local screenWidth = 0; -- added
+	pcall(function()
+		screenWidth = GetScreenWidth() * UIParent:GetEffectiveScale();
+	end)
 	rightDist = screenWidth - rightPos;
 	
 	-- find correct side
@@ -2605,9 +2613,13 @@ function LibFroznFunctions:RefreshAnchorShoppingTooltips(tip)
 			slideAmount = screenWidth - (rightPos + totalWidth);
 		end
 		if sideAnchorFrame.SetAnchorType then -- added start
-			slideAmount = slideAmount / sideAnchorFrame:GetEffectiveScale();
+			pcall(function()
+				slideAmount = slideAmount / sideAnchorFrame:GetEffectiveScale();
+			end)
 		else
-			slideAmount = slideAmount / tooltip:GetEffectiveScale();
+			pcall(function()
+				slideAmount = slideAmount / tooltip:GetEffectiveScale();
+			end)
 		end -- added end
 		
 		if slideAmount ~= 0 then -- if we calculated a slideAmount, we need to slide

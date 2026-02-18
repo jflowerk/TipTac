@@ -2571,17 +2571,25 @@ function LibFroznFunctions:RefreshAnchorShoppingTooltips(tip)
 	-- sometimes the sideAnchorFrame is an actual tooltip, and sometimes it's a script region, so make sure we're getting the actual anchor type
 	-- local anchorType = sideAnchorFrame.GetAnchorType and sideAnchorFrame:GetAnchorType() or tooltip:GetAnchorType(); -- moved to top
 	
+	-- Protect against secret values from GetWidth/GetEffectiveScale
 	local totalWidth = 0;
 	if primaryShown then
-		totalWidth = totalWidth + primaryTooltip:GetWidth() * primaryTooltip:GetEffectiveScale();
+		pcall(function()
+			totalWidth = totalWidth + primaryTooltip:GetWidth() * primaryTooltip:GetEffectiveScale();
+		end)
 	end
 	if secondaryShown then
-		totalWidth = totalWidth + secondaryTooltip:GetWidth() * primaryTooltip:GetEffectiveScale();
+		pcall(function()
+			totalWidth = totalWidth + secondaryTooltip:GetWidth() * primaryTooltip:GetEffectiveScale();
+		end)
 	end
-	
+
 	local rightDist = 0;
 	-- local screenWidth = GetScreenWidth(); -- removed
-	local screenWidth = GetScreenWidth() * UIParent:GetEffectiveScale(); -- added
+	local screenWidth = 0; -- added
+	pcall(function()
+		screenWidth = GetScreenWidth() * UIParent:GetEffectiveScale();
+	end)
 	rightDist = screenWidth - rightPos;
 	
 	-- find correct side
@@ -2605,9 +2613,13 @@ function LibFroznFunctions:RefreshAnchorShoppingTooltips(tip)
 			slideAmount = screenWidth - (rightPos + totalWidth);
 		end
 		if sideAnchorFrame.SetAnchorType then -- added start
-			slideAmount = slideAmount / sideAnchorFrame:GetEffectiveScale();
+			pcall(function()
+				slideAmount = slideAmount / sideAnchorFrame:GetEffectiveScale();
+			end)
 		else
-			slideAmount = slideAmount / tooltip:GetEffectiveScale();
+			pcall(function()
+				slideAmount = slideAmount / tooltip:GetEffectiveScale();
+			end)
 		end -- added end
 		
 		if slideAmount ~= 0 then -- if we calculated a slideAmount, we need to slide
@@ -3125,30 +3137,30 @@ function LibFroznFunctions:GetTooltipInfo(functionName, ...)
 	getTooltipInfoInProgress = true;
 
 	-- get tooltip info from C_TooltipInfo
-	
+
 	-- since df 10.0.2
 	if (C_TooltipInfo) and (type(C_TooltipInfo[functionName]) == "function") then
 		local success, tooltipData = pcall(C_TooltipInfo[functionName], ...);
 		getTooltipInfoInProgress = false;
-		
+
 		if success then
 			return tooltipData;
 		else
 			return nil;
 		end
 	end
-	
+
 	-- before df 10.0.2
-	
+
 	-- get tooltip info from scanning tooltip
 	local accessors = { -- see "TooltipDataHandler.lua"
 		GetUnit = "SetUnit",
 		GetUnitAura = "SetUnitAura",
 		GetInventoryItem = "SetInventoryItem"
 	};
-	
+
 	local tooltipData = LibFroznFunctions:GetTooltipDataFromScanTip("GetTooltipInfo", accessors[functionName], ...);
-	
+
 	getTooltipInfoInProgress = false;
 
 	return tooltipData;
@@ -3871,7 +3883,12 @@ function LibFroznFunctions:UpdateUnitRecord(unitRecord, newUnitID)
 	local success, unitGUID = pcall(UnitGUID, unitID);
 	unitGUID = success and unitGUID or nil;
 
-	if (not unitGUID) or (unitGUID ~= unitRecord.guid) then
+	-- Protect against secret values when comparing GUIDs
+	local compareSuccess, guidMatches = pcall(function()
+		return unitGUID and unitGUID == unitRecord.guid;
+	end);
+
+	if (not unitGUID) or (not compareSuccess) or (not guidMatches) then
 		return;
 	end
 	
